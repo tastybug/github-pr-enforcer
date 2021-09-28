@@ -3,29 +3,49 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
 )
 
+type label struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Default     bool   `json:"default"`
+}
+
 type PullRequest struct {
-	labels []string
+	Labels []label `json:"labels"`
 }
 
 func main() {
-	fmt.Println("Hi")
+	ghUser := "tastybug"
+	ghRepo := "github-pr-enforcer"
+	ghPullNo := "1"
+
+	if result, err := bla(ghUser, ghRepo, ghPullNo); err == nil {
+		fmt.Printf("Success: %+v", result)
+	} else {
+		log.Fatal(err)
+	}
 }
 
-func fetchAndFilterByAge(noOlderThan time.Time) (*PullRequest, error) {
-	// https://docs.github.com/en/rest/reference/pulls#get-a-pull-request
-	searchTerms := []string{"repo:golang/go", "is:open", "json", "decoder"}
+func bla(ghUser, ghRepo, ghPullNo string) (*PullRequest, error) {
 
-	ghUser := "tastybug"
-	ghRepo := "gorki"
-	fmt.Sprintf("https://github.com/repos/%s/%s/", url.PathEscape("tastybug"), url.PathEscape())
-	url := "https://github.com/repos/?q=" + url.QueryEscape(strings.Join(searchTerms, ` `))
-	resp, err := http.Get(url)
+	// path elements should already be safe, but better be safe here and escape it
+	url := fmt.Sprintf(
+		"https://api.github.com/repos/%s/%s/pulls/%s",
+		url.PathEscape(ghUser),
+		url.PathEscape(ghRepo),
+		url.PathEscape(ghPullNo))
+
+	fmt.Println(url)
+
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("Accept", "application/vnd.github.v3+json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		resp.Body.Close()
 		return nil, err
@@ -34,20 +54,13 @@ func fetchAndFilterByAge(noOlderThan time.Time) (*PullRequest, error) {
 		resp.Body.Close()
 		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
-	var result IssuesSearchResult
+
+	var result PullRequest
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		resp.Body.Close()
 		return nil, err
 	}
 	resp.Body.Close()
-
-	var inRange []*Issue
-	for _, issue := range result.Items {
-		if issue.CreatedAt.After(noOlderThan) {
-			inRange = append(inRange, issue)
-		}
-	}
-	result.Items = inRange
 
 	return &result, nil
 }
