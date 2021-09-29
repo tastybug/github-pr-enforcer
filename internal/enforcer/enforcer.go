@@ -3,48 +3,87 @@ package enforcer
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 type RuleConfig struct {
-	BannedLabels map[string]bool
-	AnyOfThis    map[string]bool
+	bannedLabels map[string]bool
+	anyOfThis    map[string]bool
 }
 
 type violations []string
 
-func IsValid(ghUser, ghRepo, ghPullNo string, rules *RuleConfig) bool {
+func IsValid(ghUser, ghRepo, ghPullNo string, rules *RuleConfig) (violations, bool) {
 
 	if prPtr, err := fetchPr(ghUser, ghRepo, ghPullNo); err != nil {
 		log.Printf("Problem fetching PR: %s", err.Error())
-		return false
+		return violations{}, false
 	} else {
 		return IsValidPr(prPtr, rules)
 	}
 }
 
-func IsValidPr(pr *PullRequest, rules *RuleConfig) bool {
+func IsValidPr(pr *PullRequest, rules *RuleConfig) (violations, bool) {
 	report := violations{}
 	for _, label := range pr.Labels {
-		if rules.containsBannedLabel(label.Name) {
-			report = append(report, fmt.Sprintf("%s is not allowed", label.Name))
+		l := strings.ToLower(label.Name)
+		if rules.containsBannedLabel(l) {
+			report = append(report, fmt.Sprintf("%s is on the blacklist: %v", label.Name, rules.bannedAsList()))
 		}
 	}
+	if !rules.containsAnyRequiredLabel(pr) {
+		report = append(report, fmt.Sprintf("does not contained a required label out of: %v", rules.anyOfThisAsList()))
+	}
 
-	return len(report) == 0
-
+	return report, len(report) == 0
 }
 
 func NewRules(bannedLabels []string, anyOfTheseLabels []string) *RuleConfig {
-	config := new(RuleConfig)
+	config := RuleConfig{
+		make(map[string]bool),
+		make(map[string]bool),
+	}
 	for _, banned := range bannedLabels {
-		config.BannedLabels[banned] = true
+		config.bannedLabels[strings.ToLower(banned)] = true
 	}
 	for _, anyOfThis := range anyOfTheseLabels {
-		config.AnyOfThis[anyOfThis] = true
+		config.anyOfThis[strings.ToLower(anyOfThis)] = true
 	}
-	return config
+	return &config
 }
 
 func (c *RuleConfig) containsBannedLabel(label string) bool {
-	return c.BannedLabels[label]
+	return c.bannedLabels[label]
+}
+
+func (c *RuleConfig) containsAnyRequiredLabel(pr *PullRequest) bool {
+	if len(c.anyOfThis) == 0 {
+		return true
+	}
+	matchesAnyLabel := false
+	for _, label := range pr.Labels {
+		l := strings.ToLower(label.Name)
+		matchesAnyLabel = matchesAnyLabel || c.anyOfThis[l]
+	}
+	return matchesAnyLabel
+}
+
+func (c *RuleConfig) bannedAsList() []string {
+	l := make([]string, 0)
+	for key, _ := range c.bannedLabels {
+		l = append(l, key)
+	}
+	return l
+}
+
+func (c *RuleConfig) anyOfThisAsList() []string {
+	l := make([]string, 0)
+	for key, _ := range c.anyOfThis {
+		l = append(l, key)
+	}
+	return l
+}
+
+func (v violations) String() string {
+	return strings.Join(v, `, `)
 }

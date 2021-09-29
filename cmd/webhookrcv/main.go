@@ -38,8 +38,8 @@ func (b *backend) serveResult(r http.ResponseWriter, req *http.Request) {
 	if request, err := readRequestBody(req); err != nil {
 		http.Error(r, fmt.Sprintf("error understanding request: %s", err.Error()), 400)
 	} else {
-		result := enforcer.IsValid(request.GhUser, request.GhRepo, request.GhPrNo, sharedConfig)
-		fmt.Fprintf(r, "Successful: %t", result)
+		_, ok := enforcer.IsValid(request.GhUser, request.GhRepo, request.GhPrNo, sharedConfig)
+		fmt.Fprintf(r, "Successful: %t", ok)
 	}
 }
 

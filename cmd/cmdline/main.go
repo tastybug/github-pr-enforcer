@@ -12,8 +12,8 @@ func main() {
 	ghRepo := "github-pr-enforcer"
 	ghPullNo := "1"
 
-	result := enforcer.IsValid(ghUser, ghRepo, ghPullNo, &enforcer.RuleConfig{})
-	if result {
+	_, ok := enforcer.IsValid(ghUser, ghRepo, ghPullNo, &enforcer.RuleConfig{})
+	if ok {
 		fmt.Println("Is valid.")
 	} else {
 		log.Fatalln("Invalid!")
