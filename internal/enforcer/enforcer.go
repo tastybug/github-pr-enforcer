@@ -13,9 +13,9 @@ type RuleConfig struct {
 
 type violations []string
 
-func IsValid(ghUser, ghRepo, ghPullNo string, rules *RuleConfig) (violations, bool) {
+func IsValid(repoFullName, ghPullNo string, rules *RuleConfig) (violations, bool) {
 
-	if prPtr, err := fetchPr(ghUser, ghRepo, ghPullNo); err != nil {
+	if prPtr, err := fetchPrViaFullName(repoFullName, ghPullNo); err != nil {
 		log.Printf("Problem fetching PR: %s", err.Error())
 		return violations{}, false
 	} else {

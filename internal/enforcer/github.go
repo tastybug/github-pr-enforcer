@@ -17,14 +17,13 @@ type PullRequest struct {
 	Labels []Label `json:"labels"`
 }
 
-func fetchPr(ghUser, ghRepo, ghPullNo string) (*PullRequest, error) {
+func fetchPrViaFullName(repoFullName, prNumber string) (*PullRequest, error) {
 
 	// path elements should already be safe, but better be safe here and escape it
 	url := fmt.Sprintf(
-		"https://api.github.com/repos/%s/%s/pulls/%s",
-		url.PathEscape(ghUser),
-		url.PathEscape(ghRepo),
-		url.PathEscape(ghPullNo))
+		"https://api.github.com/repos/%s/pulls/%s",
+		repoFullName,
+		url.PathEscape(prNumber))
 
 	fmt.Println(url)
 

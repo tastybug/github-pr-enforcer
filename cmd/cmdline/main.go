@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	ghUser := "tastybug"
-	ghRepo := "github-pr-enforcer"
+	// TODO: do input validation here
+	repoFullName := "tastybug/github-pr-enforcer"
 	ghPullNo := "1"
 
-	_, ok := enforcer.IsValid(ghUser, ghRepo, ghPullNo, &enforcer.RuleConfig{})
+	_, ok := enforcer.IsValid(repoFullName, ghPullNo, &enforcer.RuleConfig{})
 	if ok {
 		fmt.Println("Is valid.")
 	} else {

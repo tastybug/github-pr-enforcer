@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -13,10 +15,25 @@ const hostPort = `0.0.0.0:9000`
 
 type backend struct{}
 
-type requestBody struct {
-	GhUser string `json:"ghUser"`
-	GhRepo string `json:"ghRepo"`
-	GhPrNo string `json:"ghPrNo"`
+// after setting up a new webhook receiver, there will be a ping event sent first
+// https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#ping
+type pingEvent struct {
+	Zen        string `json:"zen"`
+	Repository struct {
+		Name string `json:"name"`
+		Id   int    `json:"id"`
+	} `json:"repository"`
+}
+
+// https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+type pullRequestEvent struct {
+	Action string `json:"action"`
+	// pull request number
+	Number     string `json:"number"`
+	Repository struct {
+		Name string `json:"name"`
+		Id   int    `json:"id"`
+	} `json:"repository"`
 }
 
 var sharedConfig = enforcer.NewRules(
@@ -38,20 +55,53 @@ func main() {
 
 func (b *backend) serveResult(r http.ResponseWriter, req *http.Request) {
 
-	if request, err := readRequestBody(req); err != nil {
+	if prEvent, err := readRequestBody(req); err != nil {
 		http.Error(r, fmt.Sprintf("error understanding request: %s", err.Error()), 400)
 	} else {
-		_, ok := enforcer.IsValid(request.GhUser, request.GhRepo, request.GhPrNo, sharedConfig)
+		if prEvent == nil { // we did not receive something that we can work with
+			return
+		}
+		_, ok := enforcer.IsValid(prEvent.Repository.Name, prEvent.Number, sharedConfig)
 		fmt.Fprintf(r, "Successful: %t", ok)
 	}
 }
 
-func readRequestBody(req *http.Request) (*requestBody, error) {
+func readRequestBody(req *http.Request) (*pullRequestEvent, error) {
 	defer req.Body.Close()
-	var result requestBody
-	if err := json.NewDecoder(req.Body).Decode(&result); err != nil {
+	b := new(bytes.Buffer)
+	if body, err := ioutil.ReadAll(req.Body); err != nil {
 		return nil, err
+	} else {
+		if _, err := b.Write(body); err != nil {
+			return nil, err
+		} else {
+			var prEvent pullRequestEvent
+			if err := json.NewDecoder(b).Decode(&prEvent); err != nil {
+				return nil, err
+			}
+			if !prEvent.valid() {
+				var pingEvnt pingEvent
+				if err := json.NewDecoder(b).Decode(&pingEvnt); err != nil {
+					return nil, err
+				} else if pingEvnt.valid() {
+					fmt.Printf("Received ping event: %+v\n", pingEvnt)
+					return nil, nil
+				} else {
+					return nil, fmt.Errorf("unexpected input received and discarded: %s", b.String())
+				}
+			} else {
+				return &prEvent, nil
+			}
+		}
 	}
-	// TODO here validate the request
-	return &result, nil
+}
+
+func (e pingEvent) valid() bool {
+	// TODO: do input validation here
+	return e.Zen != ``
+}
+
+func (e pullRequestEvent) valid() bool {
+	// TODO: do input validation here
+	return e.Action != ``
 }
