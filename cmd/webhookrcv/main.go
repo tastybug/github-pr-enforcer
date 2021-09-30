@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/tastybug/github-pr-enforcer/internal/enforcer"
 )
 
-const hostPort = `localhost:9000`
+const hostPort = `0.0.0.0:9000`
 
 type backend struct{}
 
@@ -26,11 +27,13 @@ var sharedConfig = enforcer.NewRules(
 func main() {
 	be := new(backend)
 
-	fmt.Println("Starting server..")
+	fmt.Printf("Starting server on %s..\n", hostPort)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/validate-pr", be.serveResult)
-	http.ListenAndServe(hostPort, mux)
+	if err := http.ListenAndServe(hostPort, mux); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (b *backend) serveResult(r http.ResponseWriter, req *http.Request) {
