@@ -56,7 +56,7 @@ func main() {
 func (b *backend) serveResult(r http.ResponseWriter, req *http.Request) {
 
 	if prEvent, err := readRequestBody(req); err != nil {
-		http.Error(r, fmt.Sprintf("error understanding request: %s", err.Error()), 400)
+		http.Error(r, fmt.Sprintf("error parsing request: %s", err.Error()), 400)
 	} else {
 		if prEvent == nil { // we did not receive something that we can work with
 			return
@@ -68,31 +68,28 @@ func (b *backend) serveResult(r http.ResponseWriter, req *http.Request) {
 
 func readRequestBody(req *http.Request) (*pullRequestEvent, error) {
 	defer req.Body.Close()
-	b := new(bytes.Buffer)
+
 	if body, err := ioutil.ReadAll(req.Body); err != nil {
 		return nil, err
 	} else {
-		if _, err := b.Write(body); err != nil {
-			return nil, err
-		} else {
-			var prEvent pullRequestEvent
-			if err := json.NewDecoder(b).Decode(&prEvent); err != nil {
-				return nil, err
-			}
-			if !prEvent.valid() {
-				var pingEvnt pingEvent
-				if err := json.NewDecoder(b).Decode(&pingEvnt); err != nil {
-					return nil, err
-				} else if pingEvnt.valid() {
-					fmt.Printf("Received ping event: %+v\n", pingEvnt)
-					return nil, nil
-				} else {
-					return nil, fmt.Errorf("unexpected input received and discarded: %s", b.String())
-				}
-			} else {
-				return &prEvent, nil
-			}
+		var prEvent pullRequestEvent
+		if err := json.NewDecoder(bytes.NewReader(body)).Decode(&prEvent); err != nil {
+			return nil, fmt.Errorf("decoding into pullRequestEvent: %s", err)
 		}
+		if !prEvent.valid() {
+			var pingEvnt pingEvent
+			if err := json.NewDecoder(bytes.NewReader(body)).Decode(&pingEvnt); err != nil {
+				return nil, fmt.Errorf("decoding into pingEvent, %s", err)
+			} else if pingEvnt.valid() {
+				fmt.Printf("Received ping event: %+v\n", pingEvnt)
+				return nil, nil
+			} else {
+				return nil, fmt.Errorf("unexpected input: %s", string(body))
+			}
+		} else {
+			return &prEvent, nil
+		}
+
 	}
 }
 
