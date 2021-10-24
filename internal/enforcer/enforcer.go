@@ -13,7 +13,7 @@ type RuleConfig struct {
 
 type violations []string
 
-func IsValid(repoFullName, ghPullNo string, rules *RuleConfig) (violations, bool) {
+func ValidatePullRequest(repoFullName, ghPullNo string, rules *RuleConfig) (violations, bool) {
 
 	if prPtr, err := fetchPrViaFullName(repoFullName, ghPullNo); err != nil {
 		log.Printf("Problem fetching PR: %s", err.Error())
@@ -36,6 +36,13 @@ func IsValidPr(pr *PullRequest, rules *RuleConfig) (violations, bool) {
 	}
 
 	return report, len(report) == 0
+}
+
+func DefaultRules() *RuleConfig {
+	return NewRules(
+		[]string{"wip", "do-not-merge"},
+		[]string{"bug", "feature", "enabler", "rework"},
+	)
 }
 
 func NewRules(bannedLabels []string, anyOfTheseLabels []string) *RuleConfig {
