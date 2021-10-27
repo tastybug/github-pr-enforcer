@@ -18,7 +18,7 @@ type backend struct{}
 
 // after setting up a new webhook receiver, there will be a ping event sent first
 // https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#ping
-type pingEvent struct {
+type upstreamGhPingEvent struct {
 	Zen        string `json:"zen"`
 	Repository struct {
 		Name string `json:"name"`
@@ -27,7 +27,7 @@ type pingEvent struct {
 }
 
 // https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
-type pullRequestEvent struct {
+type upstreamGhPrEvent struct {
 	Action string `json:"action"`
 	// pull request number
 	Number     string `json:"number"`
@@ -48,53 +48,42 @@ func main() {
 	fmt.Printf("Starting server on %s..\n", hostPort)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/validate-pr", be.serveResult)
+	mux.HandleFunc("/validate-pr", be.handleGithubEvent)
 	if err := http.ListenAndServe(hostPort, mux); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (b *backend) serveResult(r http.ResponseWriter, req *http.Request) {
-
-	if prEvent, err := readRequestBody(req); err != nil {
-		http.Error(r, fmt.Sprintf("error parsing request: %s", err.Error()), 400)
-	} else {
-		if prEvent == nil { // we did not receive something that we can work with
-			return
-		}
-		rules, err := gatherRules(req)
-		if err != nil {
-			http.Error(r, fmt.Sprintf("error parsing request: %s", err.Error()), 400)
-		}
-		_, ok := enforcer.ValidatePullRequest(prEvent.Repository.Name, prEvent.Number, rules)
-		fmt.Fprintf(r, "Successful: %t", ok)
+func (b *backend) handleGithubEvent(resp http.ResponseWriter, req *http.Request) {
+	if err := extractAndProcess(req, resp); err != nil {
+		http.Error(resp, fmt.Sprintf("error handling request: %s", err.Error()), 400)
 	}
 }
 
-func readRequestBody(req *http.Request) (*pullRequestEvent, error) {
+func extractAndProcess(req *http.Request, r http.ResponseWriter) error {
 	defer req.Body.Close()
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var prEvent pullRequestEvent
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&prEvent); err != nil {
-		return nil, fmt.Errorf("decoding into pullRequestEvent: %s", err)
+	var pr upstreamGhPrEvent
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&pr); err != nil {
+		return fmt.Errorf("decoding into pullRequestEvent: %s", err)
 	}
-	if !prEvent.valid() {
+	if !pr.valid() {
 		// if it's not a PR event, maybe it's a ping event?
-		var pingEvnt pingEvent
-		if err := json.NewDecoder(bytes.NewReader(body)).Decode(&pingEvnt); err != nil {
-			return nil, fmt.Errorf("decoding into pingEvent, %s", err)
-		} else if pingEvnt.valid() {
-			fmt.Printf("Received ping event: %+v\n", pingEvnt)
-			return nil, nil
+		var ping upstreamGhPingEvent
+		if err := json.NewDecoder(bytes.NewReader(body)).Decode(&ping); err != nil {
+			return fmt.Errorf("decoding into pingEvent, %s", err)
+		} else if ping.valid() {
+			fmt.Printf("Received ping event: %+v\n", ping)
+			return ping.process(req, r)
 		} else {
-			return nil, fmt.Errorf("unexpected input: %s", string(body))
+			return fmt.Errorf("unexpected input: %s", string(body))
 		}
 	} else {
-		return &prEvent, nil
+		return pr.process(req, r)
 	}
 }
 
@@ -106,7 +95,7 @@ func gatherRules(req *http.Request) (*enforcer.RuleConfig, error) {
 		var paramRules urlParamRuleset
 		fmt.Printf("Decoding rule set: %s", givenViaUrl)
 		if err := json.NewDecoder(strings.NewReader(givenViaUrl)).Decode(&paramRules); err != nil {
-			return nil, fmt.Errorf("parsing URL param for rule set, %s", err)
+			return nil, fmt.Errorf("given rule set broken: %s", err)
 		} else {
 			return enforcer.NewRules(paramRules.BannedLabels, paramRules.AnyOfTheseLabels), nil
 		}
@@ -115,12 +104,29 @@ func gatherRules(req *http.Request) (*enforcer.RuleConfig, error) {
 	return enforcer.DefaultRules(), nil
 }
 
-func (e pingEvent) valid() bool {
+func (e upstreamGhPingEvent) valid() bool {
 	// TODO: do input validation here
 	return e.Zen != ``
 }
 
-func (e pullRequestEvent) valid() bool {
+func (p upstreamGhPingEvent) process(req *http.Request, resp http.ResponseWriter) error {
+	if _, err := gatherRules(req); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e upstreamGhPrEvent) valid() bool {
 	// TODO: do input validation here
 	return e.Action != ``
+}
+
+func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) error {
+	if rules, err := gatherRules(req); err != nil {
+		return err
+	} else {
+		_, ok := enforcer.ValidatePullRequest(p.Repository.Name, p.Number, rules)
+		fmt.Fprintf(resp, "Successful: %t", ok)
+		return nil
+	}
 }
