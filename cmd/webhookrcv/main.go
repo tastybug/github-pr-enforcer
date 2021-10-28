@@ -43,15 +43,20 @@ type urlParamRuleset struct {
 }
 
 func main() {
-	be := new(backend)
-
 	fmt.Printf("Starting server on %s..\n", hostPort)
+
+	if err := http.ListenAndServe(hostPort, WebhookHandler()); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func WebhookHandler() http.Handler {
+	be := new(backend)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/validate-pr", be.handleGithubEvent)
-	if err := http.ListenAndServe(hostPort, mux); err != nil {
-		log.Fatal(err)
-	}
+
+	return mux
 }
 
 func (b *backend) handleGithubEvent(resp http.ResponseWriter, req *http.Request) {
@@ -77,7 +82,6 @@ func extractAndProcess(req *http.Request, r http.ResponseWriter) error {
 		if err := json.NewDecoder(bytes.NewReader(body)).Decode(&ping); err != nil {
 			return fmt.Errorf("decoding into pingEvent, %s", err)
 		} else if ping.valid() {
-			fmt.Printf("Received ping event: %+v\n", ping)
 			return ping.process(req, r)
 		} else {
 			return fmt.Errorf("unexpected input: %s", string(body))
@@ -100,7 +104,7 @@ func gatherRules(req *http.Request) (*enforcer.RuleConfig, error) {
 			return enforcer.NewRules(paramRules.BannedLabels, paramRules.AnyOfTheseLabels), nil
 		}
 	}
-	fmt.Printf("Going with default rule set.")
+	fmt.Println("Going with default rule set.")
 	return enforcer.DefaultRules(), nil
 }
 
@@ -110,9 +114,7 @@ func (e upstreamGhPingEvent) valid() bool {
 }
 
 func (p upstreamGhPingEvent) process(req *http.Request, resp http.ResponseWriter) error {
-	if _, err := gatherRules(req); err != nil {
-		return err
-	}
+	fmt.Printf("Received ping event: %+v\n", p)
 	return nil
 }
 

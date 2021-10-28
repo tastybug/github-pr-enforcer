@@ -1,5 +1,6 @@
 test:
 	cd internal/enforcer; go test
+	cd cmd/webhookrcv; go test
 build_mac:
 	go build cmd/webhookrcv/main.go; mv main enforcer_darwin
 build_amd64:

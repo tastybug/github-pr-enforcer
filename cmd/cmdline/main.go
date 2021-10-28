@@ -12,7 +12,7 @@ func main() {
 	repoFullName := "tastybug/github-pr-enforcer"
 	ghPullNo := "1"
 
-	_, ok := enforcer.IsValid(repoFullName, ghPullNo, &enforcer.RuleConfig{})
+	_, ok := enforcer.ValidatePullRequest(repoFullName, ghPullNo, &enforcer.RuleConfig{})
 	if ok {
 		fmt.Println("Is valid.")
 	} else {
