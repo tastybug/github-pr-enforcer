@@ -12,7 +12,6 @@ func TestPing(t *testing.T) {
 	// create http.Handler
 	handler := WebhookHandler()
 
-	t.Fail()
 	// run server using httptest
 	server := httptest.NewServer(handler)
 	defer server.Close()
@@ -28,7 +27,6 @@ func TestPing(t *testing.T) {
 		},
 	}
 
-	// is it working?
 	e.GET("/validate-pr").WithJSON(ping).
 		Expect().
 		Status(http.StatusOK).NoContent()
