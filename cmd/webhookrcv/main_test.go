@@ -9,14 +9,10 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	// create http.Handler
+	// given
 	handler := WebhookHandler()
-
-	// run server using httptest
 	server := httptest.NewServer(handler)
 	defer server.Close()
-
-	// create httpexpect instance
 	e := httpexpect.New(t, server.URL)
 
 	ping := map[string]interface{}{
@@ -27,6 +23,7 @@ func TestPing(t *testing.T) {
 		},
 	}
 
+	// when, then
 	e.GET("/validate-pr").WithJSON(ping).
 		Expect().
 		Status(http.StatusOK).NoContent()
