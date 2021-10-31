@@ -30,7 +30,7 @@ type upstreamGhPingEvent struct {
 type upstreamGhPrEvent struct {
 	Action string `json:"action"`
 	// pull request number
-	Number     string `json:"number"`
+	Number     int `json:"number"`
 	Repository struct {
 		Name string `json:"name"`
 		Id   int    `json:"id"`
@@ -74,7 +74,7 @@ func extractAndProcess(req *http.Request, r http.ResponseWriter) error {
 	}
 	var pr upstreamGhPrEvent
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&pr); err != nil {
-		return fmt.Errorf("decoding into pullRequestEvent: %s", err)
+		return fmt.Errorf("decoding into upstreamGhPrEvent: %s", err)
 	}
 	if !pr.valid() {
 		// if it's not a PR event, maybe it's a ping event?
