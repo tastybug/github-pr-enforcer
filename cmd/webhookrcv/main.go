@@ -124,11 +124,13 @@ func (e upstreamGhPrEvent) valid() bool {
 }
 
 func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) error {
-	if rules, err := gatherRules(req); err != nil {
-		return err
-	} else {
-		_, ok := enforcer.ValidatePullRequest(p.Repository.Name, p.Number, rules)
-		fmt.Fprintf(resp, "Successful: %t", ok)
-		return nil
-	}
+	fmt.Printf("Will now process PR event: %+v\n", p)
+	return nil
+	// if rules, err := gatherRules(req); err != nil {
+	// 	return err
+	// } else {
+	// 	_, ok := enforcer.ValidatePullRequest(p.Repository.Name, p.Number, rules)
+	// 	fmt.Fprintf(resp, "Successful: %t", ok)
+	// 	return nil
+	// }
 }
