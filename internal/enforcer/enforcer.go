@@ -2,7 +2,6 @@ package enforcer
 
 import (
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -11,20 +10,21 @@ type RuleConfig struct {
 	anyOfThis    map[string]bool
 }
 
-type violations []string
+type Violations []string
 
-func ValidatePullRequest(repoFullName, ghPullNo string, rules *RuleConfig) (violations, bool) {
-
-	if prPtr, err := fetchPrViaFullName(repoFullName, ghPullNo); err != nil {
-		log.Printf("Problem fetching PR: %s", err.Error())
-		return violations{}, false
-	} else {
-		return IsValidPr(prPtr, rules)
-	}
+type InternalLabel struct {
+	Name        string
+	Description string
 }
 
-func IsValidPr(pr *PullRequest, rules *RuleConfig) (violations, bool) {
-	report := violations{}
+type InternalPullRequest struct {
+	RepoName string
+	Number   int
+	Labels   []InternalLabel
+}
+
+func IsValidPr(pr *InternalPullRequest, rules *RuleConfig) (Violations, bool) {
+	report := Violations{}
 	for _, label := range pr.Labels {
 		l := strings.ToLower(label.Name)
 		if rules.containsBannedLabel(l) {
@@ -63,7 +63,7 @@ func (c *RuleConfig) containsBannedLabel(label string) bool {
 	return c.bannedLabels[label]
 }
 
-func (c *RuleConfig) containsAnyRequiredLabel(pr *PullRequest) bool {
+func (c *RuleConfig) containsAnyRequiredLabel(pr *InternalPullRequest) bool {
 	if len(c.anyOfThis) == 0 {
 		return true
 	}
@@ -91,6 +91,6 @@ func (c *RuleConfig) anyOfThisAsList() []string {
 	return l
 }
 
-func (v violations) String() string {
+func (v Violations) String() string {
 	return strings.Join(v, `, `)
 }

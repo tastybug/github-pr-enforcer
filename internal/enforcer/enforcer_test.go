@@ -6,10 +6,10 @@ import (
 
 func TestEmptyRulesMeansEverythingIsValid(t *testing.T) {
 	testdata := []struct {
-		pr    *PullRequest
+		pr    *InternalPullRequest
 		valid bool
 	}{
-		{&PullRequest{}, true},
+		{&InternalPullRequest{}, true},
 		{aPrWithLabels([]string{"bug"}), true},
 	}
 
@@ -23,7 +23,7 @@ func TestEmptyRulesMeansEverythingIsValid(t *testing.T) {
 
 func TestBannedLabels(t *testing.T) {
 	testdata := []struct {
-		pr    *PullRequest
+		pr    *InternalPullRequest
 		valid bool
 	}{
 		{aPrWithLabels([]string{"ok", "banned"}), false},
@@ -43,7 +43,7 @@ func TestBannedLabels(t *testing.T) {
 
 func TestAnyOfLabels(t *testing.T) {
 	testdata := []struct {
-		pr    *PullRequest
+		pr    *InternalPullRequest
 		valid bool
 	}{
 		{aPrWithLabels([]string{"bog"}), false},
@@ -61,10 +61,10 @@ func TestAnyOfLabels(t *testing.T) {
 	}
 }
 
-func aPrWithLabels(labels []string) *PullRequest {
-	pr := PullRequest{}
+func aPrWithLabels(labels []string) *InternalPullRequest {
+	pr := InternalPullRequest{}
 	for _, l := range labels {
-		pr.Labels = append(pr.Labels, Label{Name: l})
+		pr.Labels = append(pr.Labels, InternalLabel{Name: l})
 	}
 	return &pr
 }

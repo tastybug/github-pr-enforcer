@@ -32,9 +32,14 @@ type upstreamGhPrEvent struct {
 	// pull request number
 	Number     int `json:"number"`
 	Repository struct {
-		Name string `json:"name"`
-		Id   int    `json:"id"`
+		FullName string `json:"full_name"`
+		Id       int    `json:"id"`
 	} `json:"repository"`
+	PullRequest struct {
+		Labels []struct {
+			Name string `json:"name"`
+		} `json:"labels"`
+	} `json:"pull_request"`
 }
 
 type urlParamRuleset struct {
@@ -124,13 +129,28 @@ func (e upstreamGhPrEvent) valid() bool {
 }
 
 func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) error {
-	fmt.Printf("Will now process PR event: %+v\n", p)
-	return nil
-	// if rules, err := gatherRules(req); err != nil {
-	// 	return err
-	// } else {
-	// 	_, ok := enforcer.ValidatePullRequest(p.Repository.Name, p.Number, rules)
-	// 	fmt.Fprintf(resp, "Successful: %t", ok)
-	// 	return nil
-	// }
+	if rules, err := gatherRules(req); err != nil {
+		return err
+	} else {
+		innerPr := p.toInnerPr()
+		fmt.Printf("Checking %+v\n", innerPr)
+		_, ok := enforcer.IsValidPr(innerPr, rules)
+		fmt.Printf("Result: %s/%d is ok=%t\n", innerPr.RepoName, innerPr.Number, ok)
+
+		fmt.Fprintf(resp, "Successful: %t", ok)
+		return nil
+	}
+}
+
+func (p upstreamGhPrEvent) toInnerPr() *enforcer.InternalPullRequest {
+
+	innerPr := new(enforcer.InternalPullRequest)
+	for _, label := range p.PullRequest.Labels {
+		innerPr.Labels = append(innerPr.Labels, enforcer.InternalLabel{
+			Name: label.Name,
+		})
+	}
+	innerPr.Number = p.Number
+	innerPr.RepoName = p.Repository.FullName
+	return innerPr
 }

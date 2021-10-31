@@ -5,25 +5,26 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
-type Label struct {
+type GhClientLabel struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Default     bool   `json:"default"`
 }
 
-type PullRequest struct {
-	Labels []Label `json:"labels"`
+type GhClientPullRequest struct {
+	Labels []GhClientLabel `json:"labels"`
 }
 
-func fetchPrViaFullName(repoFullName, prNumber string) (*PullRequest, error) {
+func FetchPrViaFullName(repoFullName string, prNumber int) (*GhClientPullRequest, error) {
 
 	// path elements should already be safe, but better be safe here and escape it
 	url := fmt.Sprintf(
 		"https://api.github.com/repos/%s/pulls/%s",
 		repoFullName,
-		url.PathEscape(prNumber))
+		url.PathEscape(strconv.Itoa(prNumber)))
 
 	fmt.Println(url)
 
@@ -41,7 +42,7 @@ func fetchPrViaFullName(repoFullName, prNumber string) (*PullRequest, error) {
 		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 
-	var result PullRequest
+	var result GhClientPullRequest
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		resp.Body.Close()
 		return nil, err
