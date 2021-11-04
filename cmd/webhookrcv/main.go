@@ -133,11 +133,14 @@ func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) 
 		return err
 	} else {
 		innerPr := p.toInnerPr()
-		fmt.Printf("Checking %+v\n", innerPr)
-		_, ok := enforcer.IsValidPr(innerPr, rules)
-		fmt.Printf("Result: %s/%d is ok=%t\n", innerPr.RepoName, innerPr.Number, ok)
-
-		fmt.Fprintf(resp, "Successful: %t", ok)
+		log.Printf("Checking %+v\n", innerPr)
+		if violations, ok := enforcer.IsValidPr(innerPr, rules); !ok {
+			log.Printf("Result: %s is BAD (report: '%s')\n", innerPr.UID(), violations.String())
+			fmt.Fprintf(resp, "%s invalid", innerPr.UID())
+		} else {
+			log.Printf("Result: %s is GOOD (report: '%s')\n", innerPr.UID(), violations.String())
+			fmt.Fprintf(resp, "%s valid", innerPr.UID())
+		}
 		return nil
 	}
 }

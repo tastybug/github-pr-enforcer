@@ -6,5 +6,5 @@ build_mac:
 build_amd64:
 	GOOS=linux GOARCH=amd64 go build cmd/webhookrcv/main.go; mv main enforcer_amd64
 deploy_hetzner: build_amd64
-	ssh 65.108.84.79 'mv enforcer_amd64 enforcer_amd64_running'
-	scp enforcer_amd64 65.108.84.79:
+	ssh 135.181.91.94 'if [[ -f enforcer_amd64 ]]; then mv enforcer_amd64 enforcer_amd64_running; fi'
+	scp enforcer_amd64 135.181.91.94:
