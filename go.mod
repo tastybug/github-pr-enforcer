@@ -7,7 +7,7 @@ require (
 	github.com/andybalholm/brotli v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/fatih/structs v1.0.0 // indirect
-	github.com/gavv/httpexpect/v2 v2.3.1 // indirect
+	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/imkira/go-interpol v1.0.0 // indirect

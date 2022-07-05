@@ -1,8 +1,8 @@
 test:
 	cd internal/enforcer; go test
 	cd cmd/webhookrcv; go test
-build_mac:
-	go build cmd/webhookrcv/main.go; mv main enforcer_darwin
+build:
+	go build cmd/webhookrcv/main.go; mv main enforcer
 build_amd64:
 	GOOS=linux GOARCH=amd64 go build cmd/webhookrcv/main.go; mv main enforcer_amd64
 deploy_hetzner: build_amd64
