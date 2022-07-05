@@ -8,7 +8,7 @@ TODO: describe more how this is meant to support change failure rate metrics.
 
 3 shells with the following commands as a local pipeline
 
-1) test and build: `watchexec -e go 'make test build_mac`
+1) test and build: `watchexec -e go 'make test build'`
 2) restart local server: `watchexec -w enforcer -r ./enforcer`
 3) run ping against local server: `curl -v -d "{\"zen\":\"Wisdom goes here\", \"repository\": {\"name\": \"github-pr-enforcer\", \"id\": 12345}}" localhost:9000/validate-pr` 
 
