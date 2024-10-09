@@ -43,8 +43,8 @@ type upstreamGhPrEvent struct {
 }
 
 type urlParamRuleset struct {
-	BannedLabels     []string
-	AnyOfTheseLabels []string
+	BannedLabels     []string `json:"banned"`
+	AnyOfTheseLabels []string `json:"needs-one-of"`
 }
 
 func main() {
@@ -133,7 +133,7 @@ func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) 
 		return err
 	} else {
 		innerPr := p.toInnerPr()
-		log.Printf("Checking %+v\n", innerPr)
+		log.Printf("Validating %+v\n", innerPr)
 		if violations, ok := service.IsValidPr(innerPr, rules); !ok {
 			log.Printf("Result: %s is BAD (report: '%s')\n", innerPr.UID(), violations.String())
 			fmt.Fprintf(resp, "%s invalid", innerPr.UID())

@@ -1,4 +1,4 @@
-package port
+package main
 
 import (
 	"encoding/json"
