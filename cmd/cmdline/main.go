@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
 	"log"
 
 	"github.com/tastybug/github-pr-enforcer/internal/enforcer"
@@ -12,7 +13,7 @@ func main() {
 	repoFullName := "tastybug/github-pr-enforcer"
 	ghPullNo := 1
 
-	_, ok := validatePullRequest(repoFullName, ghPullNo, &enforcer.RuleConfig{})
+	_, ok := validatePullRequest(repoFullName, ghPullNo, &domain.RuleConfig{})
 
 	if ok {
 		fmt.Println("Is valid.")
@@ -21,11 +22,11 @@ func main() {
 	}
 }
 
-func validatePullRequest(repoFullName string, ghPullNo int, rules *enforcer.RuleConfig) (enforcer.Violations, bool) {
+func validatePullRequest(repoFullName string, ghPullNo int, rules *domain.RuleConfig) (domain.Violations, bool) {
 
 	if prPtr, err := enforcer.FetchPrViaFullName(repoFullName, ghPullNo); err != nil {
 		log.Printf("Problem fetching PR: %s", err.Error())
-		return enforcer.Violations{}, false
+		return domain.Violations{}, false
 	} else {
 		// convert external PR representation to internal one, then call IsValidPr...
 		log.Printf("Implement converting %+v to internal format, then call IsValidPr", *prPtr)

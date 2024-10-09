@@ -1,21 +1,22 @@
 package enforcer
 
 import (
+	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
 	"testing"
 )
 
 func TestEmptyRulesMeansEverythingIsValid(t *testing.T) {
 	testdata := []struct {
-		pr    *InternalPullRequest
+		pr    *domain.PullRequest
 		valid bool
 	}{
-		{&InternalPullRequest{}, true},
+		{&domain.PullRequest{}, true},
 		{aPrWithLabels([]string{"bug"}), true},
 	}
 
 	for _, data := range testdata {
 		expected := data.valid
-		if viol, actual := IsValidPr(data.pr, &RuleConfig{}); expected != actual {
+		if viol, actual := IsValidPr(data.pr, &domain.RuleConfig{}); expected != actual {
 			t.Errorf("%+v validity was expected as %t, but was %t. Violations: %v", data.pr, expected, actual, viol)
 		}
 	}
@@ -23,7 +24,7 @@ func TestEmptyRulesMeansEverythingIsValid(t *testing.T) {
 
 func TestBannedLabels(t *testing.T) {
 	testdata := []struct {
-		pr    *InternalPullRequest
+		pr    *domain.PullRequest
 		valid bool
 	}{
 		{aPrWithLabels([]string{"ok", "banned"}), false},
@@ -43,7 +44,7 @@ func TestBannedLabels(t *testing.T) {
 
 func TestAnyOfLabels(t *testing.T) {
 	testdata := []struct {
-		pr    *InternalPullRequest
+		pr    *domain.PullRequest
 		valid bool
 	}{
 		{aPrWithLabels([]string{"bog"}), false},
@@ -61,10 +62,10 @@ func TestAnyOfLabels(t *testing.T) {
 	}
 }
 
-func aPrWithLabels(labels []string) *InternalPullRequest {
-	pr := InternalPullRequest{}
+func aPrWithLabels(labels []string) *domain.PullRequest {
+	pr := domain.PullRequest{}
 	for _, l := range labels {
-		pr.Labels = append(pr.Labels, InternalLabel{Name: l})
+		pr.Labels = append(pr.Labels, domain.Label{Name: l})
 	}
 	return &pr
 }

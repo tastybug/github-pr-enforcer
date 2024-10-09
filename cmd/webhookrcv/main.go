@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -98,7 +99,7 @@ func extractAndProcess(req *http.Request, r http.ResponseWriter) error {
 
 // Return the applicable RuleConfig. This can either come from a request param ('rules') or, as fallback,
 // the default RuleConfig canonically provided by `enforcer.DefaultRules()`.
-func gatherRules(req *http.Request) (*enforcer.RuleConfig, error) {
+func gatherRules(req *http.Request) (*domain.RuleConfig, error) {
 	if rules := req.URL.Query()[`rules`]; len(rules) > 0 {
 		givenViaUrl := rules[0]
 		var paramRules urlParamRuleset
@@ -145,11 +146,11 @@ func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) 
 	}
 }
 
-func (p upstreamGhPrEvent) toInnerPr() *enforcer.InternalPullRequest {
+func (p upstreamGhPrEvent) toInnerPr() *domain.PullRequest {
 
-	innerPr := new(enforcer.InternalPullRequest)
+	innerPr := new(domain.PullRequest)
 	for _, label := range p.PullRequest.Labels {
-		innerPr.Labels = append(innerPr.Labels, enforcer.InternalLabel{
+		innerPr.Labels = append(innerPr.Labels, domain.Label{
 			Name: label.Name,
 		})
 	}
