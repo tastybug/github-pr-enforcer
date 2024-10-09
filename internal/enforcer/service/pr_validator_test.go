@@ -22,7 +22,7 @@ func TestEmptyRulesMeansEverythingIsValid(t *testing.T) {
 	}
 }
 
-func TestBannedLabels(t *testing.T) {
+func TestBannedLabelsMakeInvalid(t *testing.T) {
 	testdata := []struct {
 		pr    *domain.PullRequest
 		valid bool
@@ -42,7 +42,7 @@ func TestBannedLabels(t *testing.T) {
 	}
 }
 
-func TestAnyOfLabels(t *testing.T) {
+func TestEnforceExpectedLabels(t *testing.T) {
 	testdata := []struct {
 		pr    *domain.PullRequest
 		valid bool
@@ -50,7 +50,7 @@ func TestAnyOfLabels(t *testing.T) {
 		{aPrWithLabels([]string{"bog"}), false},
 		{aPrWithLabels([]string{"bug"}), true},
 		{aPrWithLabels([]string{"bug", "feature"}), true},
-		{aPrWithLabels([]string{"FEATURE"}), true}, // labels are case insensitive
+		{aPrWithLabels([]string{"FEATURE"}), true}, // labels are case-insensitive
 	}
 	rules := domain.CreateRuleConfig([]string{}, []string{"bug", "feature"})
 
