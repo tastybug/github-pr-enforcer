@@ -1,4 +1,4 @@
-package enforcer
+package service
 
 import (
 	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
@@ -32,7 +32,7 @@ func TestBannedLabels(t *testing.T) {
 		{aPrWithLabels([]string{"banned", "banned1", "bug"}), false},
 		{aPrWithLabels([]string{"banned", "BANNED1"}), false}, // labels are case insensitive
 	}
-	rules := NewRules([]string{"banned", "banned1", "banned2"}, []string{"bug"})
+	rules := domain.CreateRuleConfig([]string{"banned", "banned1", "banned2"}, []string{"bug"})
 
 	for _, data := range testdata {
 		expected := data.valid
@@ -52,7 +52,7 @@ func TestAnyOfLabels(t *testing.T) {
 		{aPrWithLabels([]string{"bug", "feature"}), true},
 		{aPrWithLabels([]string{"FEATURE"}), true}, // labels are case insensitive
 	}
-	rules := NewRules([]string{}, []string{"bug", "feature"})
+	rules := domain.CreateRuleConfig([]string{}, []string{"bug", "feature"})
 
 	for _, data := range testdata {
 		expected := data.valid

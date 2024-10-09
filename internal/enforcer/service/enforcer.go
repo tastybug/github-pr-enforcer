@@ -1,4 +1,4 @@
-package enforcer
+package service
 
 import (
 	"fmt"
@@ -22,22 +22,8 @@ func IsValidPr(pr *domain.PullRequest, rules *domain.RuleConfig) (domain.Violati
 }
 
 func DefaultRules() *domain.RuleConfig {
-	return NewRules(
+	return domain.CreateRuleConfig(
 		[]string{"wip", "do-not-merge"},
 		[]string{"bug", "feature", "enabler", "rework"},
 	)
-}
-
-func NewRules(bannedLabels []string, anyOfTheseLabels []string) *domain.RuleConfig {
-	config := domain.RuleConfig{
-		make(map[string]bool),
-		make(map[string]bool),
-	}
-	for _, banned := range bannedLabels {
-		config.BannedLabels[strings.ToLower(banned)] = true
-	}
-	for _, anyOfThis := range anyOfTheseLabels {
-		config.AnyOfThis[strings.ToLower(anyOfThis)] = true
-	}
-	return &config
 }

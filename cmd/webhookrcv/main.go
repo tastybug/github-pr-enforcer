@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
+	"github.com/tastybug/github-pr-enforcer/internal/enforcer/service"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
-
-	"github.com/tastybug/github-pr-enforcer/internal/enforcer"
 )
 
 const hostPort = `0.0.0.0:9000`
@@ -107,11 +106,11 @@ func gatherRules(req *http.Request) (*domain.RuleConfig, error) {
 		if err := json.NewDecoder(strings.NewReader(givenViaUrl)).Decode(&paramRules); err != nil {
 			return nil, fmt.Errorf("given rule set broken: %s", err)
 		} else {
-			return enforcer.NewRules(paramRules.BannedLabels, paramRules.AnyOfTheseLabels), nil
+			return domain.CreateRuleConfig(paramRules.BannedLabels, paramRules.AnyOfTheseLabels), nil
 		}
 	}
 	fmt.Println("Going with default rule set.")
-	return enforcer.DefaultRules(), nil
+	return service.DefaultRules(), nil
 }
 
 func (e upstreamGhPingEvent) valid() bool {
@@ -135,7 +134,7 @@ func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) 
 	} else {
 		innerPr := p.toInnerPr()
 		log.Printf("Checking %+v\n", innerPr)
-		if violations, ok := enforcer.IsValidPr(innerPr, rules); !ok {
+		if violations, ok := service.IsValidPr(innerPr, rules); !ok {
 			log.Printf("Result: %s is BAD (report: '%s')\n", innerPr.UID(), violations.String())
 			fmt.Fprintf(resp, "%s invalid", innerPr.UID())
 		} else {
