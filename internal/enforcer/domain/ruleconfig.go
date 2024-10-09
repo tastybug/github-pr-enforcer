@@ -3,22 +3,22 @@ package domain
 import "strings"
 
 type RuleConfig struct {
-	BannedLabels map[string]bool
-	AnyOfThis    map[string]bool
+	NeedsNoneOf map[string]bool
+	NeedsOneOf  map[string]bool
 }
 
 func (c *RuleConfig) ContainsBannedLabel(label string) bool {
-	return c.BannedLabels[label]
+	return c.NeedsNoneOf[label]
 }
 
 func (c *RuleConfig) ContainsAnyRequiredLabel(pr *PullRequest) bool {
-	if len(c.AnyOfThis) == 0 {
+	if len(c.NeedsOneOf) == 0 {
 		return true
 	}
 	matchesAnyLabel := false
 	for _, label := range pr.Labels {
 		l := strings.ToLower(label.Name)
-		matchesAnyLabel = matchesAnyLabel || c.AnyOfThis[l]
+		matchesAnyLabel = matchesAnyLabel || c.NeedsOneOf[l]
 	}
 	return matchesAnyLabel
 }
@@ -27,10 +27,10 @@ func CreateRuleConfig(bannedLabels []string, anyOfTheseLabels []string) *RuleCon
 	config := emptyRuleConfig()
 
 	for _, banned := range bannedLabels {
-		config.BannedLabels[strings.ToLower(banned)] = true
+		config.NeedsNoneOf[strings.ToLower(banned)] = true
 	}
 	for _, anyOfThis := range anyOfTheseLabels {
-		config.AnyOfThis[strings.ToLower(anyOfThis)] = true
+		config.NeedsOneOf[strings.ToLower(anyOfThis)] = true
 	}
 	return &config
 }
@@ -44,7 +44,7 @@ func emptyRuleConfig() RuleConfig {
 
 func (c *RuleConfig) BannedAsList() []string {
 	l := make([]string, 0)
-	for key, _ := range c.BannedLabels {
+	for key, _ := range c.NeedsNoneOf {
 		l = append(l, key)
 	}
 	return l
@@ -52,7 +52,7 @@ func (c *RuleConfig) BannedAsList() []string {
 
 func (c *RuleConfig) AnyOfThisAsList() []string {
 	l := make([]string, 0)
-	for key, _ := range c.AnyOfThis {
+	for key, _ := range c.NeedsOneOf {
 		l = append(l, key)
 	}
 	return l
