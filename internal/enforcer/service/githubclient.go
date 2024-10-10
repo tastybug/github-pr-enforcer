@@ -16,6 +16,7 @@ type GhClientLabel struct {
 
 type GhClientPullRequest struct {
 	Labels []GhClientLabel `json:"labels"`
+	Title  string          `json:"title"`
 }
 
 func FetchPrViaFullName(repoFullName string, prNumber int) (*GhClientPullRequest, error) {
