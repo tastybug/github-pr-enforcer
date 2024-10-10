@@ -7,22 +7,6 @@ type RuleConfig struct {
 	NeedsOneOf       map[string]bool
 }
 
-func (c *RuleConfig) ContainsBannedLabel(label string) bool {
-	return c.MustNotHaveOneOf[label]
-}
-
-func (c *RuleConfig) ContainsAnyRequiredLabel(pr *PullRequest) bool {
-	if len(c.NeedsOneOf) == 0 {
-		return true
-	}
-	matchesAnyLabel := false
-	for _, label := range pr.Labels {
-		l := strings.ToLower(label.Name)
-		matchesAnyLabel = matchesAnyLabel || c.NeedsOneOf[l]
-	}
-	return matchesAnyLabel
-}
-
 func CreateRuleConfig(bannedLabels []string, anyOfTheseLabels []string) *RuleConfig {
 	config := EmptyRuleConfig()
 

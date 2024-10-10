@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
+	"github.com/tastybug/github-pr-enforcer/internal/enforcer/service"
 	"log"
 )
 
@@ -25,7 +26,7 @@ func main() {
 
 func validatePullRequest(repoFullName string, ghPullNo int, rules *domain.RuleConfig) (domain.Violations, bool) {
 
-	if prPtr, err := FetchPrViaFullName(repoFullName, ghPullNo); err != nil {
+	if prPtr, err := service.FetchPrViaFullName(repoFullName, ghPullNo); err != nil {
 		log.Printf("Problem fetching PR: %s", err.Error())
 		return domain.Violations{}, false
 	} else {

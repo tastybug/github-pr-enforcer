@@ -1,8 +1,9 @@
 test:
 	cd internal/enforcer/service; go test
 	cd cmd/webhook-github; go test
-build_github_webhook_localarch:
-	go build cmd/webhook-github/main.go; mv main github_webhook_rcv_bin
+build:
+	go build cmd/webhook-github/main.go && mv main github_webhook_rcv_bin
+	go build cmd/cmdline-github/main.go && mv main github_cmdline_bin
 build_github_webhook_amd64:
 	GOOS=linux GOARCH=amd64 go build cmd/webhook-github/main.go; mv main github_webhook_rcv_amd64_bin
 build_github_cmdline_amd64:

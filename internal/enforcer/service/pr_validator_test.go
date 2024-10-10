@@ -16,7 +16,7 @@ func TestEmptyRulesMeansEverythingIsValid(t *testing.T) {
 
 	for _, data := range testdata {
 		expected := data.valid
-		if viol, actual := IsValidPr(data.pr, &domain.RuleConfig{}); expected != actual {
+		if viol, actual := ValidatePr(data.pr, &domain.RuleConfig{}); expected != actual {
 			t.Errorf("%+v validity was expected as %t, but was %t. Violations: %v", data.pr, expected, actual, viol)
 		}
 	}
@@ -36,7 +36,7 @@ func TestBannedLabelsMakeInvalid(t *testing.T) {
 
 	for _, data := range testdata {
 		expected := data.valid
-		if viol, actual := IsValidPr(data.pr, rules); expected != actual {
+		if viol, actual := ValidatePr(data.pr, rules); expected != actual {
 			t.Errorf("%+v validity was expected as %t, but was %t. violations: %v", data.pr, expected, actual, viol)
 		}
 	}
@@ -56,7 +56,7 @@ func TestEnforceExpectedLabels(t *testing.T) {
 
 	for _, data := range testdata {
 		expected := data.valid
-		if viol, actual := IsValidPr(data.pr, rules); expected != actual {
+		if viol, actual := ValidatePr(data.pr, rules); expected != actual {
 			t.Errorf("%+v validity was expected as %t, but was %t. Violations: %v", data.pr, expected, actual, viol)
 		}
 	}

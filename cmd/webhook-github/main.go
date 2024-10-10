@@ -134,7 +134,7 @@ func (p upstreamGhPrEvent) process(req *http.Request, resp http.ResponseWriter) 
 	} else {
 		innerPr := p.toInnerPr()
 		log.Printf("Validating %+v\n", innerPr)
-		if violations, ok := service.IsValidPr(innerPr, rules); !ok {
+		if violations, isValid := service.ValidatePr(innerPr, rules); !isValid {
 			log.Printf("Result: %s is BAD (report: '%s')\n", innerPr.UID(), violations.String())
 			fmt.Fprintf(resp, "%s invalid", innerPr.UID())
 		} else {
