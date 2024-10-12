@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/tastybug/github-pr-enforcer/internal/enforcer/domain"
+	"slices"
 	"strings"
 )
 
@@ -11,36 +12,29 @@ func ValidatePr(pr *domain.PullRequest, rules *domain.RuleConfig) (domain.Violat
 	for _, label := range pr.Labels {
 		l := strings.ToLower(label.Name)
 		if containsBannedLabel(rules, l) {
-			report = append(report, fmt.Sprintf("%s is on the blacklist: %v", label.Name, rules.BannedAsList()))
+			report = append(report, fmt.Sprintf("%s is on the blacklist: %v", label.Name, rules.BannedLabels))
 		}
 	}
 	if !containsAnyRequiredLabel(rules, pr) {
-		report = append(report, fmt.Sprintf("does not contained a required label out of: %v", rules.AnyOfThisAsList()))
+		report = append(report, fmt.Sprintf("does not contained a required label out of: %v", rules.AnyOfTheseLabels))
 	}
 
 	return report, len(report) == 0
 }
 
 func containsBannedLabel(c *domain.RuleConfig, label string) bool {
-	return c.MustNotHaveOneOf[label]
+	return slices.Contains(c.BannedLabels, label)
 }
 
 func containsAnyRequiredLabel(c *domain.RuleConfig, pr *domain.PullRequest) bool {
-	if len(c.NeedsOneOf) == 0 {
+	if len(c.AnyOfTheseLabels) == 0 {
 		return true
 	}
 	for _, label := range pr.Labels {
-		l := strings.ToLower(label.Name)
-		if c.NeedsOneOf[l] {
+		normalizedLabelToLookFor := strings.ToLower(label.Name)
+		if slices.Contains(c.AnyOfTheseLabels, normalizedLabelToLookFor) {
 			return true
 		}
 	}
 	return false
-}
-
-func DefaultRules() *domain.RuleConfig {
-	return domain.CreateRuleConfig(
-		[]string{"wip", "do-not-merge"},
-		[]string{"bug", "feature", "enabler", "rework"},
-	)
 }

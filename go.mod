@@ -1,6 +1,6 @@
 module github.com/tastybug/github-pr-enforcer
 
-go 1.17
+go 1.21
 
 require (
 	github.com/ajg/form v1.5.1 // indirect

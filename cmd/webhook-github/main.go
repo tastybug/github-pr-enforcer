@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 )
 
 const hostPort = `0.0.0.0:9000`
@@ -40,11 +39,6 @@ type upstreamGhPrEvent struct {
 			Name string `json:"name"`
 		} `json:"labels"`
 	} `json:"pull_request"`
-}
-
-type urlParamRuleset struct {
-	BannedLabels     []string `json:"banned"`
-	AnyOfTheseLabels []string `json:"needs-one-of"`
 }
 
 func main() {
@@ -96,21 +90,18 @@ func extractAndProcess(req *http.Request, r http.ResponseWriter) error {
 	}
 }
 
-// Return the applicable RuleConfig. This can either come from a request param ('rules') or, as fallback,
-// the default RuleConfig canonically provided by `enforcer.DefaultRules()`.
 func gatherRules(req *http.Request) (*domain.RuleConfig, error) {
+	var ruleConfiguration *domain.RuleConfig
 	if rules := req.URL.Query()[`rules`]; len(rules) > 0 {
-		givenViaUrl := rules[0]
-		var paramRules urlParamRuleset
-		fmt.Printf("Decoding rule set: %s", givenViaUrl)
-		if err := json.NewDecoder(strings.NewReader(givenViaUrl)).Decode(&paramRules); err != nil {
-			return nil, fmt.Errorf("given rule set broken: %s", err)
+		// if there is a custom ruleset, collect that
+		if config, err := service.GetRulesFromJsonString(rules[0]); err != nil {
+			return nil, err
 		} else {
-			return domain.CreateRuleConfig(paramRules.BannedLabels, paramRules.AnyOfTheseLabels), nil
+			ruleConfiguration = config
 		}
 	}
-	fmt.Println("Going with default rule set.")
-	return service.DefaultRules(), nil
+	// let there be a decision on what ruleset to use
+	return service.GetRules(ruleConfiguration), nil
 }
 
 func (e upstreamGhPingEvent) valid() bool {

@@ -32,7 +32,7 @@ func TestBannedLabelsMakeInvalid(t *testing.T) {
 		{aPrWithLabels([]string{"banned", "banned1", "bug"}), false},
 		{aPrWithLabels([]string{"banned", "BANNED1"}), false}, // labels are case insensitive
 	}
-	rules := domain.CreateRuleConfig([]string{"banned", "banned1", "banned2"}, []string{"bug"})
+	rules := &domain.RuleConfig{[]string{"banned", "banned1", "banned2"}, []string{"bug"}}
 
 	for _, data := range testdata {
 		expected := data.valid
@@ -52,7 +52,7 @@ func TestEnforceExpectedLabels(t *testing.T) {
 		{aPrWithLabels([]string{"bug", "feature"}), true},
 		{aPrWithLabels([]string{"FEATURE"}), true}, // labels are case-insensitive
 	}
-	rules := domain.CreateRuleConfig([]string{}, []string{"bug", "feature"})
+	rules := &domain.RuleConfig{[]string{}, []string{"bug", "feature"}}
 
 	for _, data := range testdata {
 		expected := data.valid
