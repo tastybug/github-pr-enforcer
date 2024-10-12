@@ -1,6 +1,6 @@
 package domain
 
 type RuleConfig struct {
-	BannedLabels     []string `json:"banned"`
-	AnyOfTheseLabels []string `json:"needs-one-of"`
+	NoneOfLabels []string `json:"banned"`
+	OneOfLabels  []string `json:"needs-one-of"`
 }

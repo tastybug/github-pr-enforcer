@@ -49,8 +49,8 @@ func TestEnforceExpectedLabels(t *testing.T) {
 	}{
 		{aPrWithLabels([]string{"bog"}), false},
 		{aPrWithLabels([]string{"bug"}), true},
-		{aPrWithLabels([]string{"bug", "feature"}), true},
-		{aPrWithLabels([]string{"FEATURE"}), true}, // labels are case-insensitive
+		{aPrWithLabels([]string{"bug", "feature"}), false}, // not more than one
+		{aPrWithLabels([]string{"FEATURE"}), true},         // labels are case-insensitive
 	}
 	rules := &domain.RuleConfig{[]string{}, []string{"bug", "feature"}}
 

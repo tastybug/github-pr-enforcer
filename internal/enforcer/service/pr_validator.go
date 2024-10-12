@@ -12,27 +12,42 @@ func ValidatePr(pr *domain.PullRequest, rules *domain.RuleConfig) (domain.Violat
 	for _, label := range pr.Labels {
 		l := strings.ToLower(label.Name)
 		if containsBannedLabel(rules, l) {
-			report = append(report, fmt.Sprintf("%s is on the blacklist: %v", label.Name, rules.BannedLabels))
+			report = append(report, fmt.Sprintf("FAIL: label %s prevents merge.", label.Name))
 		}
 	}
-	if !containsAnyRequiredLabel(rules, pr) {
-		report = append(report, fmt.Sprintf("does not contained a required label out of: %v", rules.AnyOfTheseLabels))
+	if !containsOneRequiredLabel(rules, pr) {
+		report = append(report, fmt.Sprintf("FAIL: required label missing: %v", rules.OneOfLabels))
+	}
+
+	if containsTooManyRequiredLabels(rules, pr) {
+		report = append(report, fmt.Sprintf("FAIL: only one of : %v", rules.OneOfLabels))
 	}
 
 	return report, len(report) == 0
 }
 
-func containsBannedLabel(c *domain.RuleConfig, label string) bool {
-	return slices.Contains(c.BannedLabels, label)
+func containsTooManyRequiredLabels(rules *domain.RuleConfig, pr *domain.PullRequest) bool {
+	var matches = 0
+	for _, label := range pr.Labels {
+		normalizedLabelToLookFor := strings.ToLower(label.Name)
+		if slices.Contains(rules.OneOfLabels, normalizedLabelToLookFor) {
+			matches++
+		}
+	}
+	return matches > 1
 }
 
-func containsAnyRequiredLabel(c *domain.RuleConfig, pr *domain.PullRequest) bool {
-	if len(c.AnyOfTheseLabels) == 0 {
+func containsBannedLabel(c *domain.RuleConfig, label string) bool {
+	return slices.Contains(c.NoneOfLabels, label)
+}
+
+func containsOneRequiredLabel(c *domain.RuleConfig, pr *domain.PullRequest) bool {
+	if len(c.OneOfLabels) == 0 {
 		return true
 	}
 	for _, label := range pr.Labels {
 		normalizedLabelToLookFor := strings.ToLower(label.Name)
-		if slices.Contains(c.AnyOfTheseLabels, normalizedLabelToLookFor) {
+		if slices.Contains(c.OneOfLabels, normalizedLabelToLookFor) {
 			return true
 		}
 	}
